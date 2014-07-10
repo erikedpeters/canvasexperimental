@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+<meta charset="UTF-8">
+</head>
+
+<body>
+
+<canvas id="Canvas" style="border:1px solid #d3d3d3;">
+Your browser does not support the HTML5 canvas tag.</canvas>
+
+<script  type="text/javascript">
+var canvas = document.getElementById("Canvas");
+var context = canvas.getContext("2d");
+canvas.width = window.innerWidth*(4/5);
+canvas.height = window.innerHeight*(4/5);
+
+window.onresize = function(){
+canvas.width = window.innerWidth*(2/3);
+canvas.height = window.innerHeight*(2/3);
+rotate("");
+}
+
+whratio = canvas.width/canvas.height;
+colors = ['blue','red','green','black','blue','white','yellow','cyan','purple','orange'];
+rcount = 0;
+ucount = 0;
+zcount = 0;
+var col = 0;
+
+
+main();
+setInterval(function(){rotate("");},123); 
+
+function main() {
+  document.addEventListener("keydown", rotate, false);
+}
+
+function outline(x, y, x2, y2, x3, y3, x4, y4, color, width, fill) {
+  context.restore();
+  context.beginPath();
+  context.moveTo(x, y);
+  context.lineTo(x2, y2);
+  context.lineTo(x3, y3);
+  context.lineTo(x4, y4);
+  context.lineTo(x, y);
+  context.closePath();
+  context.lineWidth = width;
+  context.strokeStyle = color;
+  context.stroke();
+  if(fill=='y'){
+    context.fillStyle=color;
+    context.fill();
+  }
+}
+
+
+function rotate(key) {
+  
+  switch(key.keyCode){
+    case 37:
+      //rotate left
+      rcount -= 1;
+      break;
+    case 38:
+      //rotate up
+      ucount += 1;
+      break;
+    case 39:
+      //rotate right
+      rcount += 1;
+      break;
+    case 40:
+      //rotate down
+      ucount -= 1;
+      break;
+    case 188:
+      //zoom out (,)
+      zcount -= 1;
+      break;
+    case 190:
+      //zoom in  (.)
+      zcount += 1;
+      break;
+  }
+  
+  col = (col + 1)%10;
+
+  var lefttopx = canvas.width/2*(Math.sin((30/(200*Math.PI))*rcount)) + canvas.width/2*((Math.sin((30/(200*Math.PI))*ucount))) - zcount*canvas.width/200;
+  var righttopx = canvas.width - canvas.width/2*(Math.sin((30/(200*Math.PI))*rcount)) - canvas.width/2*((Math.sin((30/(200*Math.PI))*ucount))) + zcount*canvas.width/200;
+  var leftbottomx = canvas.width/2*(Math.sin((30/(200*Math.PI))*rcount)) - canvas.width/2*((Math.sin((30/(200*Math.PI))*ucount))) - zcount*canvas.width/200;
+  var rightbottomx = canvas.width - canvas.width/2*(Math.sin((30/(200*Math.PI))*rcount)) + canvas.width/2*((Math.sin((30/(200*Math.PI))*ucount))) + zcount*canvas.width/200;
+
+  var lefttopy = canvas.height/2*(Math.sin((30/(200*Math.PI))*ucount)) - canvas.height/2*((Math.sin((30/(200*Math.PI))*rcount))) - zcount*canvas.height/200;
+  var righttopy = canvas.height/2*(Math.sin((30/(200*Math.PI))*ucount)) + canvas.height/2*((Math.sin((30/(200*Math.PI))*rcount))) - zcount*canvas.height/200;
+  var leftbottomy = canvas.height -  canvas.height/2*(Math.sin((30/(200*Math.PI))*ucount)) + canvas.height/2*((Math.sin((30/(200*Math.PI))*rcount))) + zcount*canvas.height/200;
+  var rightbottomy = canvas.height - canvas.height/2*(Math.sin((30/(200*Math.PI))*ucount)) - canvas.height/2*((Math.sin((30/(200*Math.PI))*rcount))) + zcount*canvas.height/200;
+
+
+  var dytop = -lefttopy+righttopy;
+  var dxtop = -lefttopx+righttopx;
+  var dyright = -righttopy+rightbottomy;
+  var dxright = -righttopx+rightbottomx;
+  var dybottom = -rightbottomy+leftbottomy;
+  var dxbottom = -rightbottomx+leftbottomx;
+  var dyleft = -lefttopy+leftbottomy;
+  var dxleft = -lefttopx+leftbottomx;
+
+
+  context.clearRect(0,0,canvas.width,canvas.height);
+  
+  for(var n = 0; n < 8; n++){
+    for(var i = 0; i < 8; i++){
+      outline(lefttopx + i*dxtop/8 + n*dxleft/8, lefttopy + i*dytop/8 + n*dyleft/8, lefttopx + (i+1)*dxtop/8 + n*dxleft/8, lefttopy + (i+1)*dytop/8 + n*dyleft/8, lefttopx + (i+1)*dxtop/8 + (n+1)*dxright/8, lefttopy + (i+1)*dytop/8 + (n+1)*dyright/8, lefttopx + i*dxtop/8 + (n+1)*dxleft/8, lefttopy + i*dytop/8 + (n+1)*dyleft/8, colors[(i+n+col+Math.floor(Math.random()*3))%10],0,'y');
+    }
+  }
+
+}
+
+</script> 
+
+</body>
+
+</html>

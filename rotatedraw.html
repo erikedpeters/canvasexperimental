@@ -1,0 +1,107 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="UTF-8" />
+<title>draw</title>
+</head>
+<body>
+
+<div id="canvas">
+<canvas class = "screen" id="layer0"
+style="position:absolute;
+left:0px;
+top:0px;
+border:1px solid #d3d3d3;">
+This text is displayed if your browser does not support HTML5 Canvas.
+</canvas>
+</div>
+
+<script type = "text/javascript">
+var canvas = document.getElementById("layer0");
+var context = canvas.getContext("2d");
+canvas.width = 500;
+canvas.height = 500;
+
+document.addEventListener("mousedown",buttonclick,false);
+
+function draw(){
+	var colors = ["blue","green","orange","red","purple","pink","magenta","chartreuse","crimson","gainsboro","goldenrod","gray","indianred","indigo","limegreen","olive","plum","powderblue","salmon","seagreen","sienna"];
+
+	var cardlist = [];
+	var cardcount = Math.floor(Math.random()*5)+2;
+
+	for(var i=0; i <= cardcount; i++){
+		cardlist[i]=colors[Math.floor(Math.random()*colors.length)];
+	}
+
+	for(var i = 0; i<cardlist.length; i++){
+		context.save();
+		context.beginPath();
+		context.translate(canvas.width/2,canvas.height*1.15);
+		var segments = 4*cardlist.length+(-1*(cardlist.length%2)+1);
+		context.rotate((-cardlist.length+1+i-((segments+1-cardlist.length)/2))*Math.PI/segments);
+		context.fillStyle = cardlist[i];	
+		context.rect(canvas.width*.45,-canvas.width/30,4*canvas.height/25,canvas.width/10);
+		context.closePath();
+		context.fill();
+		context.lineWidth=2;
+		context.strokeStyle = "black";
+		context.stroke();
+		context.beginPath();
+		context.rect(canvas.width*.45-2,-canvas.width/30-2,4*canvas.height/25+4,canvas.width/10+4);
+		context.lineWidth=2;
+		context.strokeStyle = "white";
+		context.stroke();
+		context.closePath();
+		context.translate(canvas.width*.45+3*canvas.height/25,-canvas.width/30);
+		context.rotate(Math.PI/2);
+		context.fillStyle = "white";
+		context.font = canvas.height/24+"px Arial";
+		context.fillText(cardlist[i],canvas.width*0.01,0,canvas.width/10-canvas.width*0.02);
+		context.restore();
+	}
+}
+
+context.save();
+context.beginPath();
+context.arc(canvas.width/2,canvas.height*.9,canvas.height*0.05,0,2*Math.PI);
+context.closePath();
+context.strokeStyle = "black";
+context.stroke();
+context.fillStyle = "chartreuse";
+context.fill();
+context.restore();
+context.font = canvas.height*0.04+"px Arial";
+context.fillStlye = "black";
+context.fillText("Draw!",canvas.width*(0.46), canvas.height*.91,canvas.width*0.08);
+
+var click = 0;
+function buttonclick(mouse){
+	var x=mouse.clientX-canvas.offsetLeft;
+	var y=mouse.clientY-canvas.offsetTop;
+
+	if(Math.pow(x-canvas.width/2,2)+Math.pow(y-canvas.height*.9,2)<=Math.pow(canvas.height*0.05,2)){
+
+		context.clearRect(0,0,canvas.width,canvas.height*0.845);
+		context.clearRect(canvas.width*0.555,0,canvas.width,canvas.height);
+		context.clearRect(0,0,canvas.width*0.445,canvas.height);				
+		draw();
+
+		context.fillStyle = "gray";
+		context.font = canvas.height/11+"px Arial";
+		context.fillText("Look at all those cards", canvas.width/9, canvas.height/5, canvas.width*7/9);
+		click+=1;
+	}
+
+	if(click>20){
+		context.fillStyle = "lightsteelblue";
+		context.font = canvas.height/17+"px Arial";
+		context.fillText("Give it a rest, kid; you're not getting anything new", canvas.width/6, canvas.height*2/5, canvas.width*2/3);
+	}
+
+}
+
+</script>
+</body>
+</html>
+

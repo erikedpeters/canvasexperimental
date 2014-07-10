@@ -1,0 +1,156 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="UTF-8" />
+<title>Playing the notes</title>
+</head>
+<body>
+
+<div id="canvas">
+<canvas class = "screen" id="layer0"
+style="position:absolute;
+left:0px;
+top:0px;
+border:1px solid #d3d3d3;">
+This text is displayed if your browser does not support HTML5 Canvas.
+</canvas>
+</div>
+
+<script type="text/javascript">
+var canvas = [];
+var context = [];
+canvas[0] = document.getElementById("layer0");
+canvas[0].width = window.innerWidth;
+canvas[0].height = window.innerHeight;
+context[0] = canvas[0].getContext("2d");
+context[0].lineWidth = 2;
+context[0].strokeStyle="black";
+var form = 0;
+
+document.addEventListener("mousemove", play, false);
+document.addEventListener("mousedown", startdraw, false);
+document.addEventListener("mouseup", stopdraw, false);
+document.addEventListener("keypress", osc, false);
+
+//a - 110, b - 123.47, c - 130.81, d - 146.83, e - 164.81, f - 174.61, g - 196.00, total range - 86
+
+window.onresize = function(){
+	for(var i in canvas){
+		canvas[i].width = window.innerWidth;
+		canvas[i].height = window.innerHeight;
+		context[0].beginPath();
+		context[0].rect(canvas[0].width/10, 7*canvas[0].height/100, 4*canvas[0].width/5, 86*canvas[0].height/100);
+		context[0].closePath();
+		context[0].strokeStyle = "black";
+		context[0].stroke();
+		var musicbox = new hitbox(canvas[0].width/10, 7*canvas[0].height/100, 4*canvas[0].width/5, 86*canvas[0].height/100,1);
+	}
+}
+
+function newscreen(){
+	var i = canvas.length;
+	var canvasdiv = document.getElementById("canvas").innerHTML
+	canvasdiv += "<canvas class = \"screen\" id=\"layer"+i+"0\"style=\"position:absolute;left:0px;top:0px;border:1px solid #d3d3d3;\">This text is displayed if your browser does not support HTML5 Canvas.</canvas>";
+	canvas[i] = document.getElementById("layer0");
+	canvas[i].width = window.innerWidth;
+	canvas[i].height = window.innerHeight;
+	context[i] = canvas[i].getContext("2d");
+}
+
+function draw(screen){
+
+}
+
+//make hitbox
+function hitbox(x0, y0, dx, dy, value) {
+  this.x_org = x0;
+  this.y_org = y0;
+  this.xchange = dx;
+  this.ychange = dy;
+  this.dmg = value;
+  this.check = function(x, y) {
+    if (x >= this.x_org && x <= this.x_org + this.xchange && y >= this.y_org &&
+      y <= this.y_org + this.ychange) {
+      return this.dmg;
+    } else {
+      return null;
+    }
+  }
+}
+
+context[0].beginPath();
+context[0].rect(canvas[0].width/10, 7*canvas[0].height/100, 4*canvas[0].width/5, 86*canvas[0].height/100);
+context[0].closePath();
+context[0].strokeStyle = "black";
+context[0].stroke();
+var musicbox = new hitbox(canvas[0].width/10, 7*canvas[0].height/100, 4*canvas[0].width/5, 86*canvas[0].height/100,1);
+
+
+var player = new webkitAudioContext();
+var oscillator = [];
+for(var i = 0; i<10; i++){
+	oscillator[i] = player.createOscillator();
+	oscillator[i].type = form; 
+	oscillator[i].connect(player.destination);
+	oscillator[i].noteOn && oscillator[i].noteOn(0);
+	oscillator[i].frequency.value = 0;
+}
+
+var tumble = 0;
+var lineon = 0;
+setInterval(function(){tumble = (tumble + 1)%10;},100);
+
+function startdraw(mouse){
+	var x = mouse.clientX;
+	var y = mouse.clientY;
+
+	if(musicbox.check(x,y) != null){
+		lineon = 1;
+		context[0].beginPath();
+		context[0].moveTo(x,y);
+		context[0].stroke();
+	}
+}
+
+function stopdraw(mouse){
+	var x = mouse.clientX;
+	var y = mouse.clientY;
+
+	if(musicbox.check(x,y) != null){
+		lineon = 0;
+		context[0].moveTo(x,y);
+		context[0].closePath();
+		context[0].stroke();
+	}
+}
+
+function play(mouse){
+	var x = mouse.clientX;
+	var y = mouse.clientY;
+
+	if(musicbox.check(x,y) != null){
+		oscillator[tumble].frequency.value = x * 1.2; 
+	}
+
+	if(lineon==1){
+		context[0].lineTo(x,y);
+		context[0].stroke();
+	}
+	
+}
+
+function osc(key){
+	form = (form+1)%4;
+	for(var i = 0; i<10; i++){
+		oscillator[i].noteOff && oscillator[i].noteOff(0);
+		oscillator[i] = player.createOscillator();
+		oscillator[i].type = form; 
+		oscillator[i].connect(player.destination);
+		oscillator[i].frequency.value = 0;
+		oscillator[i].noteOn && oscillator[i].noteOn(0);
+	}
+}
+
+</script>
+</body>
+</html>
