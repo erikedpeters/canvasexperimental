@@ -1,0 +1,512 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="UTF-8" />
+<title>Platformer</title>
+</head>
+<body>
+
+<canvas class = "screen" id="layer1"
+style="z-index: 1;
+position:absolute;
+left:0px;
+top:0px;
+border:1px solid #d3d3d3;">
+This text is displayed if your browser does not support HTML5 Canvas.
+</canvas>
+
+<canvas class = "screen" id="layer2"
+style="z-index: 2;
+position:absolute;
+left:0px;
+top:0px;
+border:1px solid #d3d3d3;">
+This text is displayed if your browser does not support HTML5 Canvas.
+</canvas>
+
+<canvas class = "screen" id="layer3"
+style="z-index: 3;
+position:absolute;
+left:0px;
+top:0px;
+border:1px solid #d3d3d3;">
+This text is displayed if your browser does not support HTML5 Canvas.
+</canvas>
+
+<script type="text/javascript">
+var can1 = document.getElementById("layer1");
+var can2 = document.getElementById("layer2");
+var can3 = document.getElementById("layer3");
+can1.width = 300
+can1.height = 200;
+can2.width = 300
+can2.height = 200;
+can3.width = 300
+can3.height = 200;
+var terrain = [];
+var gravity = 6;
+var dx=0;
+var dy=gravity;
+var l = 0;
+var play = new Image();
+play.src = "file:///Users/LogIn/Downloads/greenman_sprite.png";
+
+
+
+//SCREEN PRESETS
+var state1 = [[[20,10],[0,0],[10,10]],
+			[[50,70],[0,0],[10,10]],
+			[[100,30],[0,0],[10,10]],
+			[[120,80],[0,0],[10,10]],
+			[[140,60],[0,0],[10,10]],
+			[[150,20],[0,0],[10,10]],
+			[[190,50],[0,0],[10,10]],
+			[[210,10],[0,0],[10,10]],
+			[[250,70],[0,0],[10,10]],
+			[[280,30],[0,0],[10,10]]];
+
+var state2 = [[[10,160],[0,0],[20,20]]];
+
+var state3 = [[[0,can3.height-10],[0,0],[can3.width/3,10],[0,0],[20,0]],
+			[[can3.width/2,can3.height-10],[0,0],[can3.width/3,10],[0,0],[0,-40]],
+			[[0,can3.height-80],[0,0],[can3.width/3,10],[0,0],[120,-80]]];
+//END PRESETS
+
+
+
+//STATE LAYOUT - 2 x N array
+//[x orgin, y orgin], [x offset, y offset], [delta x, delta y]
+//
+
+var cont1 = can1.getContext("2d");
+var cont2 = can2.getContext("2d");
+var cont3 = can3.getContext("2d");
+
+document.addEventListener("keydown", control, false);
+document.addEventListener("keyup", halt, false);
+
+function main(){
+	
+	draw1(state1);
+	draw2(state2);
+	draw3(state3);
+	move();	
+
+}
+var laser=[];
+function control (key){
+	switch(key.keyCode){
+		case 37:
+      		//move left
+      		if(dx >= -2){
+      			dx -= 1;
+      		}
+      		else{
+      			dx = -2
+      		}
+      		break;
+    	case 38:
+    		if(dy > -6){
+      			dy -= 2;
+      		}
+      		break;
+    	case 39:
+      		//move right
+      		if (dx <= 2){
+      			dx += 1;
+      		}
+      		else{
+      			dx = 2;
+      		}
+      		break;
+    	//case 40:
+      		//down power
+      		
+      		//break;
+      	case 32:
+      		//LASER BLAST-O
+      		if(l==0){
+      			l=1;
+      				laser = setInterval(function(){
+      					var rand = (Math.random()*10);
+      					cont3.beginPath();
+      					cont3.moveTo(state2[0][0][0]+state2[0][2][0]*0.5,state2[0][0][1]+state2[0][2][1]*0.5 + state2[0][2][0]*0.325);
+      					cont3.lineTo(state2[0][0][0]+state2[0][2][0]*0.5 + 5*(-5+rand),can3.height+1);
+      					cont3.closePath();
+      					cont3.lineWidth = 3;
+      					cont3.strokeStyle = "chartreuse";
+      					cont3.stroke();
+      					for(z in terrain){
+      						if(terrain[z].check(state2[0][0][0]+state2[0][2][0]*0.5 + 2*(-5+rand),terrain[z].y_org)!=null && state2[0][0][1]+state2[0][2][1]*0.5<=terrain[z].y_org){
+      							cont3.beginPath();
+      							cont3.arc(state2[0][0][0]+state2[0][2][0]*0.5 + 4*(-5+rand),terrain[z].y_org,50*Math.random()*Math.random()*Math.random(),0,2*Math.PI);
+      							cont3.closePath();
+      							var colorsboom = ["aqua","darkturquoise"];
+      							cont3.strokeStyle = colorsboom[Math.floor(rand%2)];
+      							cont3.stroke();
+      							cont3.fillStyle = colorsboom[Math.floor(rand%3)];
+      							cont3.fill();
+      						}
+      					}
+      				},1);
+      			}			
+		}
+}
+function halt (key){
+	switch(key.keyCode){
+		case 37:
+      		//move left
+      		dx = 0;
+      		break;
+    	//case 38:
+      		//up power
+      		
+      		//break;
+    	case 39:
+      		//move right
+      		dx=0;
+      		break;
+    	case 32:
+      		//SPACE power
+      		clearInterval(laser);
+      		l=0;
+      		break;
+	}
+}
+
+//move objects
+function move(){
+	var cbuffer = [];
+	var shift;
+
+	//cbuffer = [x1,y1,x2,y2,x3,y3,x4,y4]
+	for(var i in state2){
+		cbuffer=[[state2[i][0][0],
+				state2[i][0][1],
+				state2[i][0][0] + state2[i][2][0],
+				state2[i][0][1],
+	        	state2[i][0][0] + state2[i][2][0],
+	        	state2[i][0][1] + state2[i][2][1],
+	        	state2[i][0][0],
+	        	state2[i][0][1] + state2[i][2][1]]];
+	}
+
+	if(dy<gravity && dy != 0){dy += 0.1;}
+	else{
+		for(var i in terrain){
+			if((terrain[i].check(cbuffer[0][4], cbuffer[0][5]) == null || terrain[i].check(cbuffer[0][6], cbuffer[0][7]) == null)&&dy<gravity){
+				dy += 0.1;
+			}
+		}
+	}
+	
+
+	//move terrain and shift player standing on dropping terrain
+	for(var i in state3){
+		if(state3[i][3][0] < state3[i][4][0]){
+			if(terrain[i].check(cbuffer[0][4], cbuffer[0][5]) != null || terrain[i].check(cbuffer[0][6], cbuffer[0][7]) != null){
+				cbuffer[0][0] += 1;
+				cbuffer[0][2] += 1;
+				cbuffer[0][4] += 1;
+				cbuffer[0][6] += 1;
+			}
+			state3[i][0][0] += 1;
+			state3[i][3][0] += 1;
+			terrain[i].x_org += 1;
+		}
+		if(state3[i][3][1] < state3[i][4][1]){
+			if(terrain[i].check(cbuffer[0][4], cbuffer[0][5]) != null || terrain[i].check(cbuffer[0][6], cbuffer[0][7]) != null){
+				cbuffer[0][1] += 1;
+				cbuffer[0][3] += 1;
+				cbuffer[0][5] += 1;
+				cbuffer[0][7] += 1;
+			}
+			state3[i][0][1] += 1;
+			state3[i][3][1] += 1;
+			terrain[i].y_org += 1;
+		}
+		if(state3[i][3][0] > state3[i][4][0]){
+			if(terrain[i].check(cbuffer[0][4], cbuffer[0][5]) != null || terrain[i].check(cbuffer[0][6], cbuffer[0][7]) != null){
+				cbuffer[0][0] -= 1;
+				cbuffer[0][2] -= 1;
+				cbuffer[0][4] -= 1;
+				cbuffer[0][6] -= 1;
+			}
+			state3[i][0][0] -= 1;
+			state3[i][3][0] -= 1;
+			terrain[i].x_org -= 1;
+		}
+		if(state3[i][3][1] > state3[i][4][1]){
+			state3[i][0][1] -= 1;
+			state3[i][3][1] -= 1;
+			terrain[i].y_org -= 1;
+		}
+		if(state3[i][3][0] == state3[i][4][0]){
+			state3[i][4][0] = -state3[i][4][0];
+			state3[i][3][0] = 0;
+		}
+		if(state3[i][3][1] == state3[i][4][1]){
+			state3[i][4][1] = -state3[i][4][1];
+			state3[i][3][1] = 0;
+		}		
+	}
+
+	for(var i in cbuffer){
+		for(var n in cbuffer[i]){
+			if(n%2 == 0){
+				cbuffer[i][n] += dx;
+			}
+			else{cbuffer[i][n] += dy;}
+		}
+	}
+
+	for(var i in terrain){
+		for(var n in cbuffer){
+			if(terrain[i].check(cbuffer[n][0], cbuffer[n][1]) != null || terrain[i].check(cbuffer[n][2], cbuffer[n][3]) != null){
+				if(dy<0){dy=0;}
+				shift = Math.abs(cbuffer[n][1] - (terrain[i].y_org+terrain[i].ychange));
+				//shift y down
+				cbuffer[n][1] += shift;
+				cbuffer[n][3] += shift;
+				cbuffer[n][5] += shift;
+				cbuffer[n][7] += shift;
+
+			}
+			else if(terrain[i].check(cbuffer[n][4], cbuffer[n][5]) != null || terrain[i].check(cbuffer[n][6], cbuffer[n][7]) != null){
+				dy = 0;
+				shift = Math.abs(cbuffer[n][5] - (terrain[i].y_org));
+				//shift y up
+				cbuffer[n][1] -= shift;
+				cbuffer[n][3] -= shift;
+				cbuffer[n][5] -= shift;
+				cbuffer[n][7] -= shift;
+			}
+			else if(terrain[i].check(cbuffer[n][2], cbuffer[n][3]) != null || terrain[i].check(cbuffer[n][4], cbuffer[n][5]) != null){
+				dx = 0;
+				shift = Math.abs(cbuffer[n][2] - terrain[i].x_org);
+				//shift x left
+				cbuffer[n][0] -= shift;
+				cbuffer[n][2] -= shift;
+				cbuffer[n][4] -= shift;
+				cbuffer[n][6] -= shift;
+			}
+			else if(terrain[i].check(cbuffer[n][0], cbuffer[n][1]) != null || terrain[i].check(cbuffer[n][6], cbuffer[n][7]) != null){
+				dx = 0;
+				shift = Math.abs(cbuffer[n][0] - (terrain[i].x_org+terrain[i].xchange));
+				//shift x right
+				cbuffer[n][0] += shift;
+				cbuffer[n][2] += shift;
+				cbuffer[n][4] += shift;
+				cbuffer[n][6] += shift;
+			}
+		}
+	}
+	for(var i in state2){
+		state2[i][0][0]=cbuffer[i][0];
+		state2[i][0][1]=cbuffer[i][1];
+		state2[i][2][0]=Math.abs(cbuffer[i][0]-cbuffer[i][2]);
+		state2[i][2][1]=Math.abs(cbuffer[i][1]-cbuffer[i][7]);
+	}
+}
+
+//draw background
+function draw1(state){
+	var x = [];
+	var y = [];
+	var x_offset = [];
+	var y_offset = [];
+	var x_delta = [];
+	var y_delta = [];
+
+	for(var i in state){
+		x[i]=state[i][0][0];
+		y[i]=state[i][0][1];
+		x_offset[i]=state[i][1][0];
+		y_offset[i]=state[i][1][1];
+		x_delta[i]=state[i][2][0];
+		y_delta[i]=state[i][2][1];
+	}
+
+
+
+	cont1.clearRect(0,0,can1.width,can1.height);
+	cont1.beginPath();
+	cont1.rect(0,0,can1.width,can1.height);
+	cont1.closePath();
+	cont1.fillStyle = 'white';
+	cont1.fill();
+
+	for(var i in x){
+		org_x = x[i]-x_offset[i];
+		org_y =y[i]-y_offset[i];
+		cont1.beginPath();
+		cont1.moveTo(org_x,org_y);
+		cont1.lineTo(org_x+x_delta[i],org_y);
+		cont1.lineTo(org_x+x_delta[i],org_y+y_delta[i]);
+		cont1.lineTo(org_x,org_y+y_delta[i]);
+		cont1.closePath();
+		cont1.fillStyle = 'silver';
+		cont1.fill();
+	}
+
+	cont1.beginPath();
+	cont1.rect(0,can1.height/2,can1.width/4,can1.height/2+1);
+	cont1.closePath();
+	cont1.lineWidth = .5;
+	cont1.strokeStyle = 'black';
+	cont1.stroke();
+	cont1.fillStyle = "whitesmoke";
+	cont1.fill();
+	cont1.beginPath();
+	cont1.rect(can1.width/4+.5,can1.height*.75,can1.width/4-1,can1.height*.25+1);
+	cont1.closePath();
+	cont1.lineWidth = .5;
+	cont1.strokeStyle = 'black';
+	cont1.stroke();
+	cont1.fillStyle = "whitesmoke";
+	cont1.fill();
+	cont1.beginPath();
+	cont1.rect(can1.width/2,can1.height*.40,can1.width/4,can1.height*.60+1);
+	cont1.closePath();
+	cont1.lineWidth = .5;
+	cont1.strokeStyle = 'black';
+	cont1.stroke();
+	cont1.fillStyle = "whitesmoke";
+	cont1.fill();
+	cont1.beginPath();
+	cont1.rect(3*can1.width/4+.5,can1.height*.65,can1.width/4-1,can1.height*.35+1);
+	cont1.closePath();
+	cont1.lineWidth = .5;
+	cont1.strokeStyle = 'black';
+	cont1.stroke();
+	cont1.fillStyle = "whitesmoke";
+	cont1.fill();
+}
+
+//draw player
+function draw2(state){
+	var x = [];
+	var y = [];
+	var x_offset = [];
+	var y_offset = [];
+	var x_delta = [];
+	var y_delta = [];
+
+	for(var i in state){
+		x[i]=state[i][0][0];
+		y[i]=state[i][0][1];
+		x_offset[i]=state[i][1][0];
+		y_offset[i]=state[i][1][1];
+		x_delta[i]=state[i][2][0];
+		y_delta[i]=state[i][2][1];
+	}
+
+	cont2.clearRect(0,0,can2.width,can2.height);
+
+	var ingrad = cont2.createLinearGradient(0,0,x_delta[i]*0.5,y_delta[i]*0.5);
+	ingrad.addColorStop(0,"silver");
+	ingrad.addColorStop(0.5,"whitesmoke");
+	ingrad.addColorStop(1,"silver");
+
+		for(var i in x){
+		org_x = x[i]-x_offset[i];
+		org_y =y[i]-y_offset[i];
+		cont2.beginPath();
+		cont2.arc(org_x+x_delta[i]*0.5,org_y+y_delta[i]*0.5,x_delta*0.325,0,2*Math.PI);
+		cont2.closePath();
+		cont2.lineWidth = 1;
+		cont2.strokeStyle = "black";
+		cont2.stroke();
+		cont2.fillStyle = "lightgray";
+		cont2.fill();
+		cont2.save();
+		cont2.beginPath();
+		cont2.translate(org_x+x_delta[i]*0.5,org_y+y_delta[i]*0.5);
+		cont2.scale(1,0.2);
+		cont2.arc(0,0,x_delta[i]*0.6,0,2*Math.PI);
+		cont2.closePath();
+		cont2.lineWidth = 1;
+		cont2.strokeStyle = "black";
+		cont2.stroke();
+		cont2.fillStyle = ingrad;
+		cont2.fill();
+		cont2.restore();			
+	}
+	oscillator[tumble].frequency.value = 175*(Math.abs(dx) + 1.5*Math.abs(dy));
+	
+}
+
+//draw terrain
+function draw3(state){
+	var x = [];
+	var y = [];
+	var x_offset = [];
+	var y_offset = [];
+	var x_delta = [];
+	var y_delta = [];
+
+	for(var i in state){
+		x[i]=state[i][0][0];
+		y[i]=state[i][0][1];
+		x_offset[i]=state[i][1][0];
+		y_offset[i]=state[i][1][1];
+		x_delta[i]=state[i][2][0];
+		y_delta[i]=state[i][2][1];
+	}
+	
+	cont3.clearRect(0,0,can3.width,can3.height);
+
+	for(var i in x){
+		org_x = x[i]-x_offset[i];
+		org_y =y[i]-y_offset[i];
+		cont3.beginPath();
+		cont3.moveTo(org_x,org_y);
+		cont3.lineTo(org_x+x_delta[i],org_y);
+		cont3.lineTo(org_x+x_delta[i],org_y+y_delta[i]);
+		cont3.lineTo(org_x,org_y+y_delta[i]);
+		cont3.closePath();
+		cont3.fillStyle = 'lightsteelblue';
+		cont3.fill();
+		terrain[i]=new hitbox(org_x, org_y, x_delta[i], y_delta[i],10);
+	}
+	
+}
+
+//make hitbox
+function hitbox(x0, y0, dx, dy, value) {
+  this.x_org = x0;
+  this.y_org = y0;
+  this.xchange = dx;
+  this.ychange = dy;
+  this.dmg = value;
+  this.check = function(x, y) {
+    if (x >= this.x_org && x <= this.x_org + this.xchange && y >= this.y_org &&
+      y <= this.y_org + this.ychange) {
+      return this.dmg;
+    } else {
+      return null;
+    }
+  }
+}
+
+
+var player = new webkitAudioContext();
+var oscillator = [];
+for(var i = 0; i<15; i++){
+	oscillator[i] = player.createOscillator();
+	oscillator[i].type = 0; 
+	oscillator[i].connect(player.destination);
+	oscillator[i].noteOn && oscillator[i].noteOn(0);
+	oscillator[i].frequency.value = 0;
+}
+
+var tumble = 0;
+var lineon = 0;
+setInterval(function(){tumble = (tumble + 1)%15;},15);
+
+
+setInterval(function(){main();},20);
+
+
+
+</script>
